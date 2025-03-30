@@ -1,0 +1,34 @@
+pipeline {
+    agent any
+    parameters {
+        choice(
+            name: 'angular-devops-app',
+            choices: ['1.0.0', '1.0.1', 'rollback'],
+            description: 'Select version to deploy or rollback'
+        )
+    }
+    stages {
+        stage('Build & Test') {
+            steps {
+                sh 'npm install'
+                sh 'ng build --prod'
+            }
+        }
+        stage('Package') {
+            steps {
+                sh 'tar -czvf app-${VERSION}.tar.gz -C dist/ .'
+                archiveArtifacts 'app-*.tar.gz'  # Store in Jenkins
+                // Alternative: Upload to S3
+                // sh 'aws s3 cp app-${VERSION}.tar.gz s3://your-bucket/'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                ansiblePlaybook(
+                    playbook: 'deploy.yml',
+                    extras: '-e "app_version=${VERSION}"'
+                )
+            }
+        }
+    }
+}
