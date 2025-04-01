@@ -30,8 +30,6 @@ pipeline {
             steps {
                 sh 'tar -czvf app-${VERSION}.tar.gz -C dist/ .'
                 archiveArtifacts 'app-*.tar.gz'
-                // Alternative for S3:
-                // sh 'aws s3 cp app-${VERSION}.tar.gz s3://your-bucket/'
             }
         }
 

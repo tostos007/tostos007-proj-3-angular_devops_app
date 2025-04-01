@@ -8,6 +8,7 @@
     path: "/var/www/html/app-{{ app_version }}"
     state: directory
     mode: '0755'
+  become: yes
 
 - name: Extract artifact
   unarchive:
