@@ -1,0 +1,12 @@
+---
+
+- hosts: app_servers
+  become: yes
+  vars:
+    app_version: "1.0.0"  # Default, overridden by Jenkins
+  roles:
+    - apache
+    - deploy
+    - mariadb  # Optional
+
+...

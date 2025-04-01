@@ -1,0 +1,25 @@
+---
+# tasks file for deploy
+
+
+
+- name: Create versioned directory
+  file:
+    path: "/var/www/html/app-{{ app_version }}"
+    state: directory
+    mode: '0755'
+
+- name: Extract artifact
+  unarchive:
+    src: "app-{{ app_version }}.tar.gz"
+    dest: "/var/www/html/app-{{ app_version }}"
+    remote_src: yes  # Fetch from Jenkins/S3
+
+- name: Update symlink to current version
+  file:
+    src: "/var/www/html/app-{{ app_version }}"
+    dest: "/var/www/html/live"
+    state: link
+    force: yes
+
+...
