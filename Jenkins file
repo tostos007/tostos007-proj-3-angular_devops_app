@@ -2,26 +2,40 @@ pipeline {
     agent any
     parameters {
         choice(
-            name: 'angular-devops-app',
+            name: 'VERSION',
             choices: ['1.0.0', '1.0.1', 'rollback'],
             description: 'Select version to deploy or rollback'
         )
     }
     stages {
+        // Stage 1: Clone Git Repository
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                     url: 'https://github.com/tostos007/tostos007-proj-3-angular_devops_app.git',
+            }
+        }
+
+        // Stage 2: Build & Test Angular
         stage('Build & Test') {
             steps {
                 sh 'npm install'
+                sh 'ng test --watch=false'
                 sh 'ng build --prod'
             }
         }
+
+        // Stage 3: Package Artifact
         stage('Package') {
             steps {
                 sh 'tar -czvf app-${VERSION}.tar.gz -C dist/ .'
-                archiveArtifacts 'app-*.tar.gz'  # Store in Jenkins
-                // Alternative: Upload to S3
+                archiveArtifacts 'app-*.tar.gz'
+                // Alternative for S3:
                 // sh 'aws s3 cp app-${VERSION}.tar.gz s3://your-bucket/'
             }
         }
+
+        // Stage 4: Deploy with Ansible
         stage('Deploy') {
             steps {
                 ansiblePlaybook(
