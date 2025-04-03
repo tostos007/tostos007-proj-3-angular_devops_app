@@ -1,16 +1,26 @@
 ---
-# tasks file for mariadb
-
-- name: Install MariaDB
+- name: Install MariaDB server
   apt:
     name: mariadb-server
     state: present
+    update_cache: yes
 
-- name: Import seed data (if provided)
+- name: Ensure MariaDB is running
+  service:
+    name: mariadb
+    state: started
+    enabled: yes
+
+- name: Create application database
   community.mysql.mysql_db:
-    name: "app_db"
-    state: "import"
-    target: "/path/to/seed.sql"
+    name: "{{ app_name }}"
+    state: present
 
+- name: Import initial data if exists
+  community.mysql.mysql_db:
+    name: "{{ app_name }}"
+    state: import
+    target: "{{ lookup('env', 'PWD') }}/seed_data.sql"
+  when: "'seed_data.sql' in lookup('fileglob', 'seed_data.sql')"
 
 ...

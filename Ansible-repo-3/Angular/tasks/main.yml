@@ -1,25 +1,27 @@
 ---
-# tasks file for deploy
-
-
-
-- name: Create versioned directory
+- name: Create application directory structure
   file:
-    path: "/var/www/html/app-{{ app_version }}"
+    path: "{{ item }}"
     state: directory
-    mode: '0755'
-  become: yes
+    owner: www-data
+    group: www-data
+  with_items:
+    - /var/www/html/{{ app_name }}
+    - /var/www/html/{{ app_name }}/releases
+    - /var/www/html/{{ app_name }}/shared
 
-- name: Extract artifact
+- name: Upload and extract artifact
   unarchive:
-    src: "app-{{ app_version }}.tar.gz"
-    dest: "/var/www/html/app-{{ app_version }}"
-    remote_src: yes  # Fetch from Jenkins/S3
+    src: "{{ artifact_name }}"
+    dest: /var/www/html/{{ app_name }}/releases/{{ build_version }}
+    remote_src: yes
+    owner: www-data
+    group: www-data
 
-- name: Update symlink to current version
+- name: Update current symlink to new version
   file:
-    src: "/var/www/html/app-{{ app_version }}"
-    dest: "/var/www/html/live"
+    src: /var/www/html/{{ app_name }}/releases/{{ build_version }}
+    dest: /var/www/html/{{ app_name }}/current
     state: link
     force: yes
 

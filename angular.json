@@ -1,0 +1,13 @@
+{
+    "projects": {
+      "angular-devops-app": {
+        "architect": {
+          "build": {
+            "options": {
+              "outputPath": "dist/angular-devops-app"
+            }
+          }
+        }
+      }
+    }
+  }
