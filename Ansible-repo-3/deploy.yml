@@ -1,12 +1,9 @@
 ---
-name: Deploy Angular Application
-hosts: n1
-become: yes
-vars:
-    app_version: "1.0.0"  # Default, overridden by Jenkins
-    angular_app_artifact: "{{ artifact_path | default('/tmp/angular-app-1.0.0.tar.gz') }}"
-roles:
+- hosts: app_servers
+  become: yes
+  roles:
     - apache
-    - deploy
-    - mariadb  # Optional
+    - deploy_app
+    - mariadb  # Optional role
+
 ...
