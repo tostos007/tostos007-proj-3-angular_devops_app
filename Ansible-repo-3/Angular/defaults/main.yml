@@ -1,4 +1,0 @@
----
-# defaults file for deploy
-angular_app_version: "1.0.0"
-angular_app_artifact: "/tmp/angular-app-{{ app_version }}.tar.gz"
