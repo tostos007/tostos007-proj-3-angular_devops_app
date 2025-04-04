@@ -16,11 +16,18 @@
     name: "{{ app_name }}"
     state: present
 
-- name: Import initial data if exists
+- name: Create application user
+  community.mysql.mysql_user:
+    name: "{{ app_name }}_user"
+    password: "{{ db_password }}"
+    priv: "{{ app_name }}.*:ALL"
+    state: present
+
+- name: Import initial data if provided
   community.mysql.mysql_db:
     name: "{{ app_name }}"
     state: import
-    target: "{{ lookup('env', 'PWD') }}/seed_data.sql"
-  when: "'seed_data.sql' in lookup('fileglob', 'seed_data.sql')"
+    target: "{{ initial_data_file | default(omit) }}"
+  when: initial_data_file is defined
 
 ...

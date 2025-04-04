@@ -1,0 +1,28 @@
+---
+- hosts: app_servers
+  become: yes
+  vars:
+    app_symlink: "{{ deploy_path }}/current"
+  
+  tasks:
+    - name: Verify version exists
+      stat:
+        path: "{{ deploy_path }}/versions/{{ rollback_version }}"
+      register: version_stat
+
+    - name: Fail if version doesn't exist
+      fail:
+        msg: "Version {{ rollback_version }} does not exist on the server"
+      when: not version_stat.stat.exists
+
+    - name: Update symlink to rolled back version
+      file:
+        src: "{{ deploy_path }}/versions/{{ rollback_version }}"
+        dest: "{{ app_symlink }}"
+        state: link
+        force: yes
+
+    - name: Restart Apache
+      service:
+        name: apache2
+        state: restarted
