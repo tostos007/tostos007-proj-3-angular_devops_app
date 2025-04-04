@@ -7,7 +7,7 @@ pipeline {
         DEPLOY_DIR = "/var/www/html/${APP_NAME}"
         ARTIFACT_NAME = "${APP_NAME}-${BUILD_VERSION}.tar.gz"
     }
-    
+    // what is wrong with trump
     stages {
         stage('Build') {
             steps {
