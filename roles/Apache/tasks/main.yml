@@ -11,24 +11,5 @@
     state: started
     enabled: yes
 
-- name: Configure Apache virtual host
-  template:
-    src: angular-app.conf.j2
-    dest: /etc/apache2/sites-available/{{ app_name }}.conf
-  notify: restart apache
-
-- name: Enable site configuration
-  file:
-    src: /etc/apache2/sites-available/{{ app_name }}.conf
-    dest: /etc/apache2/sites-enabled/{{ app_name }}.conf
-    state: link
-    force: yes
-  notify: restart apache
-
-- name: Disable default site
-  file:
-    path: /etc/apache2/sites-enabled/000-default.conf
-    state: absent
-  notify: restart apache
 
 ...
