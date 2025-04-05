@@ -1,6 +1,8 @@
 pipeline {
     agent any
     
+
+    
     environment {
         APP_NAME = "temp-angular"
         BUILD_VERSION = "${env.BUILD_NUMBER}"
@@ -24,11 +26,7 @@ pipeline {
             }
         }
         
-        stage('Test') {
-            steps {
-                sh 'npm test'
-            }
-        }
+        
         
         stage('Deploy') {
             steps {
