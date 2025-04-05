@@ -7,7 +7,7 @@
 
 - name: Create versions directory
   file:
-    path: "{{ deploy_path }}/versions"
+    path: "{{ deploy_path }}/versions/{{ build_version }}"
     state: directory
     mode: '0755'
 
