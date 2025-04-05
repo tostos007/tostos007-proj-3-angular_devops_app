@@ -1,13 +1,14 @@
 pipeline {
     agent any
-    
+
     environment {
         APP_NAME = "temp-angular"
         BUILD_VERSION = "${env.BUILD_NUMBER}"
         ARTIFACT_NAME = "${APP_NAME}-${BUILD_VERSION}.tar.gz"
         DEPLOY_PATH = "/var/www/html/${APP_NAME}"
+        ARTIFACT_FULL_PATH = "${env.WORKSPACE}/${APP_NAME}-${env.BUILD_NUMBER}.tar.gz" // ✅ Added for Ansible
     }
-    
+
     stages {
         stage('Build') {
             steps {
@@ -31,7 +32,7 @@ pipeline {
                         playbook: 'deploy.yml',
                         inventory: 'hosts.ini',
                         extraVars: [
-                            provided_artifact_name: "${artifactFullPath}",   // ✅ FIXED VARIABLE
+                            provided_artifact_name: "${ARTIFACT_FULL_PATH}", // ✅ Corrected reference
                             app_name: "${APP_NAME}",
                             build_version: "${BUILD_VERSION}",
                             deploy_path: "${DEPLOY_PATH}"
@@ -52,7 +53,7 @@ pipeline {
     }
 }
 
-// Rollback Pipeline
+// Rollback Pipeline Configuration
 properties([
     parameters([
         choice(
