@@ -53,26 +53,28 @@ pipeline {
         }
 
         stage('Deploy') {
-            when {
-                not {
-                    equals expected: '', actual: params.ROLLBACK_VERSION
-                }
-            }
-            steps {
-                script {
-                    ansiblePlaybook(
-                        playbook: 'deploy.yml',
-                        inventory: 'hosts.ini',
-                        extraVars: [
-                            artifact_path: "${ARTIFACT_FULL_PATH}",
-                            app_name: "${APP_NAME}",
-                            build_version: "${BUILD_VERSION}",
-                            deploy_path: "${DEPLOY_PATH}"
-                        ]
-                    )
-                }
-            }
+    when {
+        not {
+            equals expected: '', actual: params.ROLLBACK_VERSION
         }
+    }
+    steps {
+        script {
+            ansiblePlaybook(
+                playbook: 'deploy.yml',
+                inventory: 'hosts.ini',
+                extraVars: [
+                    provided_artifact_name: "${ARTIFACT_NAME}",      // <- This line added
+                    artifact_path: "${ARTIFACT_FULL_PATH}",
+                    app_name: "${APP_NAME}",
+                    build_version: "${BUILD_VERSION}",
+                    deploy_path: "${DEPLOY_PATH}"
+                ]
+            )
+        }
+    }
+}
+
 
         stage('Verify Rollback Version') {
             when {
