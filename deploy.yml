@@ -5,5 +5,5 @@
   roles:
     - Angular
     - mariadb
-    - apache
+    - Apache
 ...
