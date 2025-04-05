@@ -31,7 +31,7 @@ pipeline {
                         playbook: 'deploy.yml',
                         inventory: 'hosts.ini',
                         extraVars: [
-                            provided_artifact_name: "${ARTIFACT_NAME}",   // ✅ FIXED VARIABLE
+                            provided_artifact_name: "${artifactFullPath}",   // ✅ FIXED VARIABLE
                             app_name: "${APP_NAME}",
                             build_version: "${BUILD_VERSION}",
                             deploy_path: "${DEPLOY_PATH}"
