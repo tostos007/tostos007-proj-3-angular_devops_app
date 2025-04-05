@@ -12,7 +12,7 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    sh 'npm install'
+                    sh 'npm install --legacy-peer-deps'
                     sh 'npm run build'
                     sh "tar -czvf ${ARTIFACT_NAME} -C dist/${APP_NAME} ."
                     archiveArtifacts artifacts: "${ARTIFACT_NAME}", onlyIfSuccessful: true
