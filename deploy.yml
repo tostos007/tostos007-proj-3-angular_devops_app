@@ -42,9 +42,14 @@
         owner: www-data
         group: www-data
 
+    - name: Copy artifact to remote server
+      copy:
+        src: "{{ artifact_name }}"
+        dest: "/tmp/{{ artifact_name }}"
+
     - name: Extract artifact to versioned directory
       unarchive:
-        src: "{{ artifact_name }}"
+        src: "/tmp/{{ artifact_name }}"
         dest: "/var/www/html/{{ app_name }}/releases/{{ version }}"
         remote_src: yes
         owner: www-data
