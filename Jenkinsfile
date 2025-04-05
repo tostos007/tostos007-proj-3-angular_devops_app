@@ -1,18 +1,3 @@
-def getBuildVersions() {
-    def versions = []
-    def job = Jenkins.instance.getItemByFullName(env.JOB_NAME)
-    job?.getBuilds()?.each { build ->
-        if (build.result == Result.SUCCESS) {
-            def artifact = build.getArtifacts().find { it.relativePath == 'version.txt' }
-            if (artifact) {
-                def version = build.getArtifactManager().root().child(artifact.relativePath).open().text.trim()
-                versions << version
-            }
-        }
-    }
-    return versions.size() > 0 ? versions.unique().join('\n') : '1'
-}
-
 pipeline {
     agent any
 
@@ -27,7 +12,7 @@ pipeline {
     parameters {
         choice(
             name: 'ROLLBACK_VERSION',
-            choices: 1, 2,
+            choices: ['1'], // Can be updated dynamically with active choice script plugin or default '1'
             description: 'Select version to rollback to'
         )
     }
@@ -35,9 +20,7 @@ pipeline {
     stages {
         stage('Build') {
             when {
-                not {
-                    equals expected: '', actual: params.ROLLBACK_VERSION
-                }
+                expression { params.ROLLBACK_VERSION == '1' }
             }
             steps {
                 script {
@@ -53,48 +36,42 @@ pipeline {
         }
 
         stage('Deploy') {
-    when {
-        not {
-            equals expected: '', actual: params.ROLLBACK_VERSION
+            when {
+                expression { params.ROLLBACK_VERSION == '1' }
+            }
+            steps {
+                script {
+                    ansiblePlaybook(
+                        playbook: 'deploy.yml',
+                        inventory: 'hosts.ini',
+                        extraVars: [
+                            provided_artifact_name: "${ARTIFACT_NAME}",
+                            artifact_path: "${ARTIFACT_FULL_PATH}",
+                            app_name: "${APP_NAME}",
+                            build_version: "${BUILD_VERSION}",
+                            deploy_path: "${DEPLOY_PATH}",
+                            current_version: "${BUILD_VERSION}"
+                        ]
+                    )
+                }
+            }
         }
-    }
-    steps {
-        script {
-            ansiblePlaybook(
-                playbook: 'deploy.yml',
-                inventory: 'hosts.ini',
-                extraVars: [
-                    provided_artifact_name: "${ARTIFACT_NAME}",
-                    artifact_path: "${ARTIFACT_FULL_PATH}",
-                    app_name: "${APP_NAME}",
-                    build_version: "${BUILD_VERSION}",
-                    deploy_path: "${DEPLOY_PATH}",
-                    current_version: "${BUILD_VERSION}" // <-- ADD THIS
-                    
-                    
-                    
-                    ]
-
-            )
-        }
-    }
-}
-
 
         stage('Verify Rollback Version') {
             when {
-                not {
-                    equals expected: '1', actual: params.ROLLBACK_VERSION
-                }
+                expression { params.ROLLBACK_VERSION != '1' }
             }
             steps {
                 script {
                     echo "Preparing to rollback to version ${params.ROLLBACK_VERSION}"
-                    def build = Jenkins.instance.getItemByFullName(env.JOB_NAME).getBuildByNumber(params.ROLLBACK_VERSION.toInteger())
+                    def job = Jenkins.instance.getItemByFullName(env.JOB_NAME)
+                    def build = job?.getBuildByNumber(params.ROLLBACK_VERSION.toInteger())
                     if (!build) {
                         error("Build ${params.ROLLBACK_VERSION} not found")
                     }
-                    def artifact = build.getArtifacts().find { it.relativePath == "${APP_NAME}-${params.ROLLBACK_VERSION}.tar.gz" }
+                    def artifact = build.getArtifacts().find {
+                        it.relativePath == "${APP_NAME}-${params.ROLLBACK_VERSION}.tar.gz"
+                    }
                     if (!artifact) {
                         error("Artifact for version ${params.ROLLBACK_VERSION} not found")
                     }
@@ -104,9 +81,7 @@ pipeline {
 
         stage('Rollback') {
             when {
-                not {
-                    equals expected: '1', actual: params.ROLLBACK_VERSION
-                }
+                expression { params.ROLLBACK_VERSION != '1' }
             }
             steps {
                 script {
@@ -127,7 +102,7 @@ pipeline {
     post {
         success {
             script {
-                if (params.ROLLBACK_VERSION && params.ROLLBACK_VERSION != '1') {
+                if (params.ROLLBACK_VERSION != '1') {
                     echo "Successfully rolled back to version ${params.ROLLBACK_VERSION}"
                 } else {
                     echo "Deployment of version ${BUILD_VERSION} completed successfully!"
@@ -136,7 +111,7 @@ pipeline {
         }
         failure {
             script {
-                if (params.ROLLBACK_VERSION && params.ROLLBACK_VERSION != '1') {
+                if (params.ROLLBACK_VERSION != '1') {
                     echo "Rollback to version ${params.ROLLBACK_VERSION} failed"
                 } else {
                     echo "Deployment failed for version ${BUILD_VERSION}"
