@@ -33,7 +33,7 @@ pipeline {
                 script {
                     ansiblePlaybook(
                         playbook: 'deploy.yml',
-                        inventory: 'inventory.ini',
+                        inventory: 'hosts.ini',
                         extraVars: [
                             artifact_path: "${ARTIFACT_NAME}",
                             app_name: "${APP_NAME}",
