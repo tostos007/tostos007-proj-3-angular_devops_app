@@ -1,13 +1,13 @@
 <VirtualHost *:80>
     ServerAdmin webmaster@localhost
-    DocumentRoot /var/www/html/temp-angular/current/browser
+    DocumentRoot=/var/www/{{ app_name }}/current
 
-    <Directory /var/www/html/temp-angular/current/browser>
+    <Directory /var/www/{{ app_name }}/current>
         Options Indexes FollowSymLinks
         AllowOverride All
         Require all granted
     </Directory>
 
-    ErrorLog ${APACHE_LOG_DIR}/angular_error.log
-    CustomLog ${APACHE_LOG_DIR}/angular_access.log combined
+    ErrorLog ${APACHE_LOG_DIR}/{{ app_name }}_error.log
+    CustomLog ${APACHE_LOG_DIR}/{{ app_name }}_access.log combined
 </VirtualHost>
