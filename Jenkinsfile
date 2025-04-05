@@ -64,12 +64,17 @@ pipeline {
                 playbook: 'deploy.yml',
                 inventory: 'hosts.ini',
                 extraVars: [
-                    provided_artifact_name: "${ARTIFACT_NAME}",      // <- This line added
+                     provided_artifact_name: "${ARTIFACT_NAME}",
                     artifact_path: "${ARTIFACT_FULL_PATH}",
                     app_name: "${APP_NAME}",
                     build_version: "${BUILD_VERSION}",
-                    deploy_path: "${DEPLOY_PATH}"
-                ]
+                    deploy_path: "${DEPLOY_PATH}",
+                    current_version: "${BUILD_VERSION}" // <-- ADD THIS
+                    
+                    
+                    
+                    ]
+
             )
         }
     }
