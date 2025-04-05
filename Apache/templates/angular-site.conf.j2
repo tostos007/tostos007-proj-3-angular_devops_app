@@ -1,13 +1,13 @@
 <VirtualHost *:80>
-    ServerName {{ ansible_host }}
-    DocumentRoot {{ app_symlink }}
+    ServerAdmin webmaster@localhost
+    DocumentRoot /var/www/html/temp-angular/current/browser
 
-    <Directory {{ app_symlink }}>
+    <Directory /var/www/html/temp-angular/current/browser>
         Options Indexes FollowSymLinks
         AllowOverride All
         Require all granted
     </Directory>
 
-    ErrorLog ${APACHE_LOG_DIR}/error.log
-    CustomLog ${APACHE_LOG_DIR}/access.log combined
+    ErrorLog ${APACHE_LOG_DIR}/angular_error.log
+    CustomLog ${APACHE_LOG_DIR}/angular_access.log combined
 </VirtualHost>
