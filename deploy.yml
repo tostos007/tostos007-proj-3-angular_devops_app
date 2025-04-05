@@ -1,89 +1,9 @@
----
-- hosts: app_servers
+- name: Deploy Angular App
+  hosts: app_servers
   become: yes
-  vars:
-    app_name: "angular-devops-app"
-    build_version: "{{ build_version | default('1') }}"
-    version: "{{ build_version | default('1') }}"
-    artifact_name: "{{ provided_artifact_name | default('temp-angular-1.tar.gz') }}"
 
-  tasks:
-    - name: Install required system packages
-      apt:
-        name: "{{ item }}"
-        state: present
-        update_cache: yes
-      loop:
-        - apache2
-        - python3-pip
-
-    - name: Ensure Apache is running
-      service:
-        name: apache2
-        state: started
-        enabled: yes
-
-    - name: Create application directory structure
-      file:
-        path: "{{ item }}"
-        state: directory
-        owner: www-data
-        group: www-data
-      loop:
-        - "/var/www/html/{{ app_name }}"
-        - "/var/www/html/{{ app_name }}/releases"
-        - "/var/www/html/{{ app_name }}/shared"
-
-    - name: Create versioned release directory
-      file:
-        path: "/var/www/html/{{ app_name }}/releases/{{ version }}"
-        state: directory
-        mode: '0755'
-        owner: www-data
-        group: www-data
-
-    - name: Copy artifact to remote server
-      copy:
-        src: "{{ artifact_name }}"
-        dest: "/tmp/{{ artifact_name }}"
-
-    - name: Extract artifact to versioned directory
-      unarchive:
-        src: "/tmp/{{ artifact_name }}"
-        dest: "/var/www/html/{{ app_name }}/releases/{{ version }}"
-        remote_src: yes
-        owner: www-data
-        group: www-data
-
-    - name: Update current symlink to new version
-      file:
-        src: "/var/www/html/{{ app_name }}/releases/{{ version }}"
-        dest: "/var/www/html/{{ app_name }}/current"
-        state: link
-        force: yes
-
-    - name: Configure Apache virtual host
-      template:
-        src: templates/angular-app.conf.j2
-        dest: "/etc/apache2/sites-available/{{ app_name }}.conf"
-      notify: restart apache
-
-    - name: Enable site configuration
-      file:
-        src: "/etc/apache2/sites-available/{{ app_name }}.conf"
-        dest: "/etc/apache2/sites-enabled/{{ app_name }}.conf"
-        state: link
-      notify: restart apache
-
-    - name: Disable default site
-      file:
-        path: "/etc/apache2/sites-enabled/000-default.conf"
-        state: absent
-      notify: restart apache
-
-  handlers:
-    - name: restart apache
-      service:
-        name: apache2
-        state: restarted
+  roles:
+    - Angular
+    - mariadb
+    - apache
 ...
