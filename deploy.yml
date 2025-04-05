@@ -4,6 +4,7 @@
   vars:
     app_name: "angular-devops-app"
     build_version: "{{ build_version | default('1') }}"
+    default_artifact_name: "temp-angular-1.tar.gz"
     artifact_name: "{{ artifact_name | default('temp-angular-1.tar.gz') }}"
     version: "{{ build_version | default('1') }}"
 
