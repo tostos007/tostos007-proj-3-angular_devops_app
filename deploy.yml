@@ -4,7 +4,7 @@
   vars:
     app_name: "angular-devops-app"
     build_version: "{{ build_version | default('1') }}"
-    artifact_name: "{{ artifact_name | default('angular-devops-app-1.tar.gz') }}"
+    artifact_name: "temp-angular-18.tar.gz"
     
   tasks:
     - name: Install required system packages
