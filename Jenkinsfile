@@ -27,7 +27,7 @@ pipeline {
     parameters {
         choice(
             name: 'ROLLBACK_VERSION',
-            choices: getBuildVersions(),
+            choices: readFile('build_versions.txt').split('\n'),
             description: 'Select version to rollback to'
         )
     }
