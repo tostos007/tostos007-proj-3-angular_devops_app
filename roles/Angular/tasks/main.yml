@@ -1,43 +1,48 @@
 ---
-- name: Create deployment directory
+- name: Ensure deployment and version directories exist
   file:
-    path: "{{ deploy_path }}"
+    path: "{{ item }}"
     state: directory
     mode: '0755'
-
-- name: Create versions directory
-  file:
-    path: "{{ deploy_path }}/versions/{{ build_version }}"
-    state: directory
-    mode: '0755'
-
-- name: Copy artifact to server
-  delegate_to: localhost   # ✅ This runs the task on Jenkins (control node)
-  copy:
-    src: "{{ provided_artifact_name }}"
-    dest: "{{ deploy_path }}/{{ build_version }}/"
-    remote_src: no  # Assuming artifact is on Jenkins server
+  loop:
+    - "{{ deploy_path }}"
+    - "{{ deploy_path }}/versions/{{ build_version }}"
 
 - name: Extract artifact to versioned directory
+  delegate_to: localhost
   unarchive:
     src: "{{ artifact_path }}"
-    dest: "{{ deploy_path }}/versions/{{ current_version }}"
+    dest: "{{ deploy_path }}/versions/{{ build_version }}"
     remote_src: yes
-    creates: "{{ deploy_path }}/versions/{{ current_version }}"
+    creates: "{{ deploy_path }}/versions/{{ build_version }}"
 
-- name: Update symlink to current version
+- name: Update 'current' symlink to point to the new version
   file:
-    src: "{{ deploy_path }}/versions/{{ current_version }}"
+    src: "{{ deploy_path }}/versions/{{ build_version }}"
     dest: "{{ app_symlink }}"
     state: link
     force: yes
 
-- name: Set permissions for web content
+- name: Set permissions for web content under 'versions' and 'current'
   file:
-    path: "{{ deploy_path }}"
+    path: "{{ deploy_path }}/versions"
     state: directory
     recurse: yes
     owner: www-data
     group: www-data
     mode: '0755'
-...
+
+- name: Set permissions for symlink target (if needed)
+  file:
+    path: "{{ app_symlink }}"
+    state: link
+    owner: www-data
+    group: www-data
+
+# Optional: Clean up old versions, keep last 5
+- name: Clean up old versions (keep last 5)
+  shell: |
+    ls -1dt {{ deploy_path }}/versions/* | tail -n +6 | xargs rm -rf
+  args:
+    warn: false
+  when: cleanup_old_versions | default(true)
