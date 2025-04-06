@@ -15,7 +15,7 @@
   delegate_to: localhost  # Runs on Jenkins (control node)
   copy:
     src: "{{ provided_artifact_name }}"
-    dest: "{{ deploy_path }}/versions/{{ build_version }}/{{ provided_artifact_name }}"
+    dest: "{{ deploy_path }}/versions/{{ build_version }}/"
     remote_src: no  # Artifact is local to Jenkins
 
 - name: Extract artifact into versioned directory
@@ -23,7 +23,7 @@
     src: "{{ deploy_path }}/versions/{{ build_version }}/{{ provided_artifact_name }}"
     dest: "{{ deploy_path }}/versions/{{ current_version }}"
     remote_src: yes
-    creates: "{{ deploy_path }}/versions/{{ current_version }}"
+    creates: "{{ deploy_path }}/versions/{{ current_version }}/index.html"
 
 - name: Update 'current' symlink to latest version
   file:
