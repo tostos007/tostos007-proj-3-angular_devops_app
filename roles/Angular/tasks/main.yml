@@ -10,12 +10,13 @@
     state: directory
     mode: '0755'
 
-- name: Ensure remote versions directory exists before copying
+- name: Ensure remote versions directory exists (from Jenkins)
   file:
     path: "{{ deploy_path }}/versions/{{ build_version }}"
     state: directory
     mode: '0755'
   delegate_to: n1
+  run_once: true
 
 - name: Copy artifact to server
   delegate_to: localhost
