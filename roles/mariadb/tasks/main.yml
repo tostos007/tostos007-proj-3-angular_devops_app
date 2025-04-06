@@ -1,0 +1,33 @@
+---
+- name: Install MariaDB server
+  apt:
+    name: mariadb-server
+    state: present
+    update_cache: yes
+
+- name: Ensure MariaDB is running
+  service:
+    name: mariadb
+    state: started
+    enabled: yes
+
+- name: Create application database
+  community.mysql.mysql_db:
+    name: "{{ app_name }}"
+    state: present
+
+- name: Create application user
+  community.mysql.mysql_user:
+    name: "{{ app_name }}_user"
+    password: "{{ db_password }}"
+    priv: "{{ app_name }}.*:ALL"
+    state: present
+
+- name: Import initial data if provided
+  community.mysql.mysql_db:
+    name: "{{ app_name }}"
+    state: import
+    target: "{{ initial_data_file | default(omit) }}"
+  when: initial_data_file is defined
+
+...

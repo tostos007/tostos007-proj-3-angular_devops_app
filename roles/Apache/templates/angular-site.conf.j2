@@ -1,0 +1,14 @@
+<VirtualHost *:80>
+    ServerAdmin webmaster@localhost
+    DocumentRoot=/var/www/html
+
+    <Directory /var/www/html>
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+        FallbackResource /index.html  # Required for Angular routing
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/{{ app_name }}_error.log
+    CustomLog ${APACHE_LOG_DIR}/{{ app_name }}_access.log combined
+</VirtualHost>
