@@ -5,7 +5,7 @@
     state: directory
     mode: '0755'
 
-- name: Create version-specific directory
+- name: Ensure versioned subdirectory exists on target
   file:
     path: "{{ deploy_path }}/versions/{{ build_version }}"
     state: directory
@@ -17,18 +17,17 @@
     src: "{{ provided_artifact_name }}"
     dest: "{{ deploy_path }}/versions/{{ build_version }}/{{ provided_artifact_name }}"
     remote_src: no
-    force: yes
 
 - name: Extract artifact on target server
   unarchive:
     src: "{{ deploy_path }}/versions/{{ build_version }}/{{ provided_artifact_name }}"
-    dest: "{{ deploy_path }}/versions/{{ current_version }}"
+    dest: "{{ deploy_path }}/versions/{{ build_version }}"
     remote_src: yes
-    creates: "{{ deploy_path }}/versions/{{ current_version }}/index.html"
+    creates: "{{ deploy_path }}/versions/{{ build_version }}/index.html"
 
 - name: Update 'current' symlink to point to latest version
   file:
-    src: "{{ deploy_path }}/versions/{{ current_version }}"
+    src: "{{ deploy_path }}/versions/{{ build_version }}"
     dest: "{{ app_symlink }}"
     state: link
     force: yes
