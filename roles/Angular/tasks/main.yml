@@ -14,7 +14,7 @@
   delegate_to: localhost
   copy:
     src: "{{ artifact_path }}"
-    dest: "{{ deploy_path }}/versions/{{ build_version }}/"
+    dest: "{{ deploy_path }}/versions/{{ build_version }}/{{ app_name }}-{{ build_version }}.tar.gz"
     remote_src: no
 
 - name: Extract artifact to versioned directory
