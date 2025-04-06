@@ -20,7 +20,7 @@
 
 - name: Extract artifact to versioned directory
   unarchive:
-    src: "/tmp/{{ artifact_path }}"
+    src: "{{ artifact_path }}"
     dest: "{{ deploy_path }}/versions/{{ current_version }}"
     remote_src: yes
     creates: "{{ deploy_path }}/versions/{{ current_version }}"
