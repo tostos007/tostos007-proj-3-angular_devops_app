@@ -16,7 +16,7 @@
   copy:
     src: "{{ provided_artifact_name }}"
     dest: "{{ deploy_path }}/{{ build_version }}/"
-    remote_src: yes  # Assuming artifact is on Jenkins server
+    remote_src: no # Assuming artifact is on Jenkins server
 
 - name: Extract artifact to versioned directory
   unarchive:
