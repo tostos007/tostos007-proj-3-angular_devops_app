@@ -1,15 +1,15 @@
----
 - name: Ensure deployment base directory exists
   file:
     path: "{{ deploy_path }}"
     state: directory
     mode: '0755'
 
-- name: Ensure versioned subdirectory exists on target
+- name: Ensure versioned subdirectory exists on target (for Jenkins copy)
   file:
     path: "{{ deploy_path }}/versions/{{ build_version }}"
     state: directory
     mode: '0755'
+  delegate_to: n1
 
 - name: Copy artifact from Jenkins to target server
   delegate_to: localhost
@@ -17,6 +17,7 @@
     src: "{{ provided_artifact_name }}"
     dest: "{{ deploy_path }}/versions/{{ build_version }}/{{ provided_artifact_name }}"
     remote_src: no
+    force: yes
 
 - name: Extract artifact on target server
   unarchive:
@@ -40,4 +41,3 @@
     owner: www-data
     group: www-data
     mode: '0755'
-...
