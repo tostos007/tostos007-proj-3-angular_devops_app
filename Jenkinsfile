@@ -7,6 +7,7 @@ pipeline {
         ARTIFACT_NAME = "${APP_NAME}-${BUILD_VERSION}.tar.gz"
         DEPLOY_PATH = "/var/www/html/${APP_NAME}"
         ARTIFACT_FULL_PATH = "${env.WORKSPACE}/${ARTIFACT_NAME}"
+        APP_SYMLINK = "${DEPLOY_PATH}/current"
     }
 
     parameters {
@@ -45,12 +46,13 @@ pipeline {
                         playbook: 'deploy.yml',
                         inventory: 'hosts.ini',
                         extraVars: [
+                            artifact_path       : "${ARTIFACT_FULL_PATH}",
                             provided_artifact_name: "${ARTIFACT_NAME}",
-                            artifact_path: "${ARTIFACT_FULL_PATH}",
-                            app_name: "${APP_NAME}",
-                            build_version: "${BUILD_VERSION}",
-                            deploy_path: "${DEPLOY_PATH}",
-                            current_version: "${BUILD_VERSION}"
+                            app_name            : "${APP_NAME}",
+                            build_version       : "${BUILD_VERSION}",
+                            current_version     : "${BUILD_VERSION}",
+                            deploy_path         : "${DEPLOY_PATH}",
+                            app_symlink         : "${APP_SYMLINK}"
                         ]
                     )
                 }
@@ -89,9 +91,10 @@ pipeline {
                         playbook: 'rollback.yml',
                         inventory: 'inventory.ini',
                         extraVars: [
-                            rollback_version: "${params.ROLLBACK_VERSION}",
-                            app_name: "${APP_NAME}",
-                            deploy_path: "${DEPLOY_PATH}"
+                            rollback_version : "${params.ROLLBACK_VERSION}",
+                            app_name         : "${APP_NAME}",
+                            deploy_path      : "${DEPLOY_PATH}",
+                            app_symlink      : "${APP_SYMLINK}"
                         ]
                     )
                 }

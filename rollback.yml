@@ -1,11 +1,12 @@
 ---
-- hosts: app_servers
+- name: Rollback Angular App to Specified Version
+  hosts: app_servers
   become: yes
   vars:
     app_symlink: "{{ deploy_path }}/current"
-  
+
   tasks:
-    - name: Verify version exists
+    - name: Check if rollback version exists on server
       stat:
         path: "{{ deploy_path }}/versions/{{ rollback_version }}"
       register: version_stat
@@ -15,14 +16,23 @@
         msg: "Version {{ rollback_version }} does not exist on the server"
       when: not version_stat.stat.exists
 
-    - name: Update symlink to rolled back version
+    - name: Update symlink to rollback version
       file:
         src: "{{ deploy_path }}/versions/{{ rollback_version }}"
         dest: "{{ app_symlink }}"
         state: link
         force: yes
 
-    - name: Restart Apache
+    - name: Set correct permissions on the rolled back version
+      file:
+        path: "{{ deploy_path }}"
+        state: directory
+        recurse: yes
+        owner: www-data
+        group: www-data
+        mode: '0755'
+
+    - name: Restart Apache to apply rollback
       service:
         name: apache2
         state: restarted

@@ -1,29 +1,35 @@
----
 - name: Create deployment directory
   file:
     path: "{{ deploy_path }}"
     state: directory
     mode: '0755'
 
-- name: Create versions directory
+- name: Create versions directory (on remote)
   file:
     path: "{{ deploy_path }}/versions/{{ build_version }}"
     state: directory
     mode: '0755'
 
+- name: Ensure remote versions directory exists before copying
+  file:
+    path: "{{ deploy_path }}/versions/{{ build_version }}"
+    state: directory
+    mode: '0755'
+  delegate_to: n1
+
 - name: Copy artifact to server
-  delegate_to: localhost   # ✅ This runs the task on Jenkins (control node)
+  delegate_to: localhost
   copy:
-    src: "{{ provided_artifact_name }}"
-    dest: "{{ deploy_path }}/{{ build_version }}/"
-    remote_src: no  # Assuming artifact is on Jenkins server
+    src: "{{ artifact_path }}"
+    dest: "{{ deploy_path }}/versions/{{ build_version }}/{{ app_name }}-{{ build_version }}.tar.gz"
+    remote_src: no
 
 - name: Extract artifact to versioned directory
   unarchive:
-    src: "{{ artifact_path }}"
+    src: "{{ deploy_path }}/versions/{{ build_version }}/{{ app_name }}-{{ build_version }}.tar.gz"
     dest: "{{ deploy_path }}/versions/{{ current_version }}"
     remote_src: yes
-    creates: "{{ deploy_path }}/versions/{{ current_version }}"
+    creates: "{{ deploy_path }}/versions/{{ current_version }}/index.html"
 
 - name: Update symlink to current version
   file:
@@ -40,4 +46,3 @@
     owner: www-data
     group: www-data
     mode: '0755'
-...
