@@ -10,13 +10,9 @@
     state: directory
     mode: '0755'
 
-- name: Ensure remote versions directory exists (from Jenkins)
-  file:
-    path: "{{ deploy_path }}/versions/{{ build_version }}"
-    state: directory
-    mode: '0755'
-  delegate_to: n1
-  run_once: true
+- name: Ensure remote versions directory exists (via SSH from Jenkins)
+  delegate_to: localhost
+  command: ssh -o StrictHostKeyChecking=no ubuntu@n1 "mkdir -p {{ deploy_path }}/versions/{{ build_version }}"
 
 - name: Copy artifact to server
   delegate_to: localhost
