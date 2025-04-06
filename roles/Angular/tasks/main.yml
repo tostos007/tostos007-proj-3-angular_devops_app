@@ -1,38 +1,38 @@
 ---
-- name: Create deployment directory
+- name: Create deployment base directory
   file:
     path: "{{ deploy_path }}"
     state: directory
     mode: '0755'
 
-- name: Create versions directory
+- name: Create version-specific directory
   file:
     path: "{{ deploy_path }}/versions/{{ build_version }}"
     state: directory
     mode: '0755'
 
-- name: Copy artifact to server
-  delegate_to: localhost   # ✅ This runs the task on Jenkins (control node)
+- name: Copy artifact from Jenkins to target
+  delegate_to: localhost  # Runs on Jenkins (control node)
   copy:
     src: "{{ provided_artifact_name }}"
     dest: "{{ deploy_path }}/{{ build_version }}/"
-    remote_src: no # Assuming artifact is on Jenkins server
+    remote_src: no  # Artifact is local to Jenkins
 
-- name: Extract artifact to versioned directory
+- name: Extract artifact into versioned directory
   unarchive:
     src: "{{ artifact_path }}"
     dest: "{{ deploy_path }}/versions/{{ current_version }}"
     remote_src: yes
     creates: "{{ deploy_path }}/versions/{{ current_version }}"
 
-- name: Update symlink to current version
+- name: Update 'current' symlink to latest version
   file:
     src: "{{ deploy_path }}/versions/{{ current_version }}"
     dest: "{{ app_symlink }}"
     state: link
     force: yes
 
-- name: Set permissions for web content
+- name: Set permissions for deployment directory
   file:
     path: "{{ deploy_path }}"
     state: directory
@@ -40,4 +40,3 @@
     owner: www-data
     group: www-data
     mode: '0755'
-...

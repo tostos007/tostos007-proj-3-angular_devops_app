@@ -2,18 +2,18 @@ pipeline {
     agent any
 
     environment {
-        APP_NAME = "temp-angular"
-        BUILD_VERSION = "${env.BUILD_NUMBER}"
-        ARTIFACT_NAME = "${APP_NAME}-${BUILD_VERSION}.tar.gz"
-        DEPLOY_PATH = "/var/www/html/${APP_NAME}"
+        APP_NAME           = "temp-angular"
+        BUILD_VERSION      = "${env.BUILD_NUMBER}"
+        ARTIFACT_NAME      = "${APP_NAME}-${BUILD_VERSION}.tar.gz"
+        DEPLOY_PATH        = "/var/www/html/${APP_NAME}"
         ARTIFACT_FULL_PATH = "${env.WORKSPACE}/${ARTIFACT_NAME}"
-        APP_SYMLINK = "${DEPLOY_PATH}/current"
+        APP_SYMLINK        = "${DEPLOY_PATH}/current"
     }
 
     parameters {
         choice(
             name: 'ROLLBACK_VERSION',
-            choices: ['1'], // Can be updated dynamically with active choice script plugin or default '1'
+            choices: ['1'], // Update dynamically via Active Choice plugin if needed
             description: 'Select version to rollback to'
         )
     }
@@ -28,6 +28,7 @@ pipeline {
                     sh 'npm install --legacy-peer-deps'
                     sh 'npm run build'
                     sh "tar -czvf ${ARTIFACT_NAME} -C dist/${APP_NAME} ."
+
                     archiveArtifacts artifacts: "${ARTIFACT_NAME}", onlyIfSuccessful: true
 
                     writeFile file: 'version.txt', text: "${BUILD_VERSION}"
@@ -43,16 +44,16 @@ pipeline {
             steps {
                 script {
                     ansiblePlaybook(
-                        playbook: 'deploy.yml',
+                        playbook : 'deploy.yml',
                         inventory: 'hosts.ini',
                         extraVars: [
-                            artifact_path       : "${ARTIFACT_FULL_PATH}",
-                            provided_artifact_name: "${ARTIFACT_NAME}",
-                            app_name            : "${APP_NAME}",
-                            build_version       : "${BUILD_VERSION}",
-                            current_version     : "${BUILD_VERSION}",
-                            deploy_path         : "${DEPLOY_PATH}",
-                            app_symlink         : "${APP_SYMLINK}"
+                            artifact_path          : ARTIFACT_FULL_PATH,
+                            provided_artifact_name : ARTIFACT_NAME,
+                            app_name               : APP_NAME,
+                            build_version          : BUILD_VERSION,
+                            current_version        : BUILD_VERSION,
+                            deploy_path            : DEPLOY_PATH,
+                            app_symlink            : APP_SYMLINK
                         ]
                     )
                 }
@@ -66,14 +67,18 @@ pipeline {
             steps {
                 script {
                     echo "Preparing to rollback to version ${params.ROLLBACK_VERSION}"
-                    def job = Jenkins.instance.getItemByFullName(env.JOB_NAME)
+
+                    def job   = Jenkins.instance.getItemByFullName(env.JOB_NAME)
                     def build = job?.getBuildByNumber(params.ROLLBACK_VERSION.toInteger())
+
                     if (!build) {
                         error("Build ${params.ROLLBACK_VERSION} not found")
                     }
+
                     def artifact = build.getArtifacts().find {
                         it.relativePath == "${APP_NAME}-${params.ROLLBACK_VERSION}.tar.gz"
                     }
+
                     if (!artifact) {
                         error("Artifact for version ${params.ROLLBACK_VERSION} not found")
                     }
@@ -88,13 +93,13 @@ pipeline {
             steps {
                 script {
                     ansiblePlaybook(
-                        playbook: 'rollback.yml',
+                        playbook : 'rollback.yml',
                         inventory: 'inventory.ini',
                         extraVars: [
-                            rollback_version : "${params.ROLLBACK_VERSION}",
-                            app_name         : "${APP_NAME}",
-                            deploy_path      : "${DEPLOY_PATH}",
-                            app_symlink      : "${APP_SYMLINK}"
+                            rollback_version : params.ROLLBACK_VERSION,
+                            app_name         : APP_NAME,
+                            deploy_path      : DEPLOY_PATH,
+                            app_symlink      : APP_SYMLINK
                         ]
                     )
                 }
