@@ -1,48 +1,35 @@
 ---
-- name: Ensure deployment and version directories exist
+- name: Ensure deployment directories exist
   file:
-    path: "{{ item }}"
+    path: "/var/www/html/temp-angular/versions/101"
     state: directory
     mode: '0755'
-  loop:
-    - "{{ deploy_path }}"
-    - "{{ deploy_path }}/versions/{{ build_version }}"
 
-- name: Extract artifact to versioned directory
+- name: Copy artifact to remote host
+  copy:
+    src: "/var/lib/jenkins/workspace/Tosin/temp-angular-101.tar.gz"
+    dest: "/tmp/temp-angular-101.tar.gz"
   delegate_to: localhost
-  unarchive:
-    src: "{{ artifact_path }}"
-    dest: "{{ deploy_path }}/versions/{{ build_version }}"
-    remote_src: yes
-    creates: "{{ deploy_path }}/versions/{{ build_version }}"
 
-- name: Update 'current' symlink to point to the new version
+- name: Extract artifact to versioned directory on remote host
+  unarchive:
+    src: "/tmp/temp-angular-101.tar.gz"
+    dest: "/var/www/html/temp-angular/versions/101"
+    remote_src: yes
+    creates: "/var/www/html/temp-angular/versions/101"
+
+- name: Update 'current' symlink
   file:
-    src: "{{ deploy_path }}/versions/{{ build_version }}"
-    dest: "{{ app_symlink }}"
+    src: "/var/www/html/temp-angular/versions/101"
+    dest: "/var/www/html/temp-angular/current"
     state: link
     force: yes
 
-- name: Set permissions for web content under 'versions' and 'current'
+- name: Set permissions for web content
   file:
-    path: "{{ deploy_path }}/versions"
+    path: "/var/www/html/temp-angular"
     state: directory
     recurse: yes
     owner: www-data
     group: www-data
     mode: '0755'
-
-- name: Set permissions for symlink target (if needed)
-  file:
-    path: "{{ app_symlink }}"
-    state: link
-    owner: www-data
-    group: www-data
-
-# Optional: Clean up old versions, keep last 5
-- name: Clean up old versions (keep last 5)
-  shell: |
-    ls -1dt {{ deploy_path }}/versions/* | tail -n +6 | xargs rm -rf
-  args:
-    warn: false
-  when: cleanup_old_versions | default(true)
