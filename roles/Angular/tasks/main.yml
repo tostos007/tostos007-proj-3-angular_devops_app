@@ -11,28 +11,28 @@
     state: directory
     mode: '0755'
 
-- name: Copy artifact to server
-  delegate_to: localhost   # ✅ This runs the task on Jenkins (control node)
+- name: Copy artifact to remote server
+  delegate_to: localhost
   copy:
     src: "{{ provided_artifact_name }}"
-    dest: "{{ deploy_path }}/{{ build_version }}/"
-    remote_src: yes  # Assuming artifact is on Jenkins server
+    dest: "{{ deploy_path }}/versions/{{ build_version }}/"
+    remote_src: no
 
-- name: Extract artifact to versioned directory
+- name: Extract artifact
   unarchive:
-    src: "{{ artifact_path }}"
-    dest: "{{ deploy_path }}/versions/{{ current_version }}"
+    src: "{{ deploy_path }}/versions/{{ build_version }}/{{ provided_artifact_name }}"
+    dest: "{{ deploy_path }}/versions/{{ build_version }}"
     remote_src: yes
-    creates: "{{ deploy_path }}/versions/{{ current_version }}"
+    creates: "{{ deploy_path }}/versions/{{ build_version }}/index.html"
 
 - name: Update symlink to current version
   file:
-    src: "{{ deploy_path }}/versions/{{ current_version }}"
+    src: "{{ deploy_path }}/versions/{{ build_version }}"
     dest: "{{ app_symlink }}"
     state: link
     force: yes
 
-- name: Set permissions for web content
+- name: Set ownership and permissions
   file:
     path: "{{ deploy_path }}"
     state: directory
@@ -40,4 +40,3 @@
     owner: www-data
     group: www-data
     mode: '0755'
-...
