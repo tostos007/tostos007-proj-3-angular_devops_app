@@ -1,35 +1,43 @@
 ---
-- name: Ensure deployment directories exist
+- name: Create deployment directory
   file:
-    path: "/var/www/html/temp-angular/versions/101"
+    path: "{{ deploy_path }}"
     state: directory
     mode: '0755'
 
-- name: Copy artifact to remote host
-  copy:
-    src: "/var/lib/jenkins/workspace/Tosin/temp-angular-101.tar.gz"
-    dest: "/tmp/temp-angular-101.tar.gz"
-  delegate_to: localhost
-
-- name: Extract artifact to versioned directory on remote host
-  unarchive:
-    src: "/tmp/temp-angular-101.tar.gz"
-    dest: "/var/www/html/temp-angular/versions/101"
-    remote_src: yes
-    creates: "/var/www/html/temp-angular/versions/101"
-
-- name: Update 'current' symlink
+- name: Create versions directory
   file:
-    src: "/var/www/html/temp-angular/versions/101"
-    dest: "/var/www/html/temp-angular/current"
+    path: "{{ deploy_path }}/versions/{{ build_version }}"
+    state: directory
+    mode: '0755'
+
+- name: Copy artifact to server
+  delegate_to: localhost   # ✅ This runs the task on Jenkins (control node)
+  copy:
+    src: "{{ provided_artifact_name }}"
+    dest: "{{ deploy_path }}/{{ build_version }}/"
+    remote_src: no  # Assuming artifact is on Jenkins server
+
+- name: Extract artifact to versioned directory
+  unarchive:
+    src: "{{ artifact_path }}"
+    dest: "{{ deploy_path }}/versions/{{ current_version }}"
+    remote_src: yes
+    creates: "{{ deploy_path }}/versions/{{ current_version }}"
+
+- name: Update symlink to current version
+  file:
+    src: "{{ deploy_path }}/versions/{{ current_version }}"
+    dest: "{{ app_symlink }}"
     state: link
     force: yes
 
 - name: Set permissions for web content
   file:
-    path: "/var/www/html/temp-angular"
+    path: "{{ deploy_path }}"
     state: directory
     recurse: yes
     owner: www-data
     group: www-data
     mode: '0755'
+...
