@@ -26,7 +26,8 @@ pipeline {
                 script {
                     sh 'npm install --legacy-peer-deps'
                     sh 'npm run build'
-                    sh "tar -czvf ${ARTIFACT_NAME} -C dist/${APP_NAME} ."
+                    // ✅ Tar only the `browser` folder to include index.html at the root
+                    sh "tar -czvf ${ARTIFACT_NAME} -C dist/${APP_NAME}/browser ."
                     archiveArtifacts artifacts: "${ARTIFACT_NAME}", onlyIfSuccessful: true
 
                     writeFile file: 'version.txt', text: "${BUILD_VERSION}"
