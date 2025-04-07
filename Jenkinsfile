@@ -12,7 +12,7 @@ pipeline {
     parameters {
         choice(
             name: 'ROLLBACK_VERSION',
-            choices: ['1', '125', '126', '127'], // ✅ Add real build numbers here
+            choices: ['1', '128', '129', '130'], // ✅ Add real build numbers here
             description: 'Select version to rollback to. "1" means deploy latest.'
         )
     }
