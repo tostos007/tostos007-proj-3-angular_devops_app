@@ -10,11 +10,9 @@ pipeline {
     }
 
     parameters {
-        choice(
-            name: 'ROLLBACK_VERSION',
-            choices: ['1', '138', '139', '140'], // ✅ Add real build numbers here
-            description: 'Select version to rollback to. "1" means deploy latest.'
-        )
+        string(name: 'VERSION', defaultValue: '1.0.1', description: 'Version to deploy')
+        choice(name: 'DEPLOY_TYPE', choices: ['deploy', 'rollback'], description: 'Deploy new version or rollback to previous')
+        string(name: 'ROLLBACK_VERSION', defaultValue: '', description: 'Version to rollback to (if DEPLOY_TYPE is rollback)')
     }
 
     stages {
