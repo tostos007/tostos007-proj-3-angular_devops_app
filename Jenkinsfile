@@ -12,19 +12,18 @@ pipeline {
     parameters {
         string(name: 'VERSION', defaultValue: '1.0.1', description: 'Version to deploy')
         choice(name: 'DEPLOY_TYPE', choices: ['deploy', 'rollback'], description: 'Deploy new version or rollback to previous')
-        string(name: 'ROLLBACK_VERSION', defaultValue: '', description: 'Version to rollback to (if DEPLOY_TYPE is rollback)')
+        string(name: 'ROLLBACK_VERSION', defaultValue: '', description: 'Version to rollback to (used only if DEPLOY_TYPE is rollback)')
     }
 
     stages {
         stage('Build') {
             when {
-                expression { params.ROLLBACK_VERSION == '1' }
+                expression { params.DEPLOY_TYPE == 'deploy' }
             }
             steps {
                 script {
                     sh 'npm install --legacy-peer-deps'
                     sh 'npm run build'
-                    // ✅ Tar only the `browser` folder to include index.html at the root
                     sh "tar -czvf ${ARTIFACT_NAME} -C dist/${APP_NAME}/browser ."
                     archiveArtifacts artifacts: "${ARTIFACT_NAME}", onlyIfSuccessful: true
 
@@ -36,7 +35,7 @@ pipeline {
 
         stage('Deploy') {
             when {
-                expression { params.ROLLBACK_VERSION == '1' }
+                expression { params.DEPLOY_TYPE == 'deploy' }
             }
             steps {
                 script {
@@ -59,21 +58,26 @@ pipeline {
 
         stage('Verify Rollback Version') {
             when {
-                expression { params.ROLLBACK_VERSION != '1' }
+                expression { params.DEPLOY_TYPE == 'rollback' }
             }
             steps {
                 script {
-                    echo "Preparing to rollback to version ${params.ROLLBACK_VERSION}"
+                    def rollbackVer = params.ROLLBACK_VERSION?.trim()
+                    if (!rollbackVer) {
+                        error("ROLLBACK_VERSION must be provided for rollback!")
+                    }
+
+                    echo "Preparing to rollback to version ${rollbackVer}"
                     def job = Jenkins.instance.getItemByFullName(env.JOB_NAME)
-                    def build = job?.getBuildByNumber(params.ROLLBACK_VERSION.toInteger())
+                    def build = job?.getBuildByNumber(rollbackVer.toInteger())
                     if (!build) {
-                        error("Build ${params.ROLLBACK_VERSION} not found")
+                        error("Build ${rollbackVer} not found")
                     }
                     def artifact = build.getArtifacts().find {
-                        it.relativePath == "${APP_NAME}-${params.ROLLBACK_VERSION}.tar.gz"
+                        it.relativePath == "${APP_NAME}-${rollbackVer}.tar.gz"
                     }
                     if (!artifact) {
-                        error("Artifact for version ${params.ROLLBACK_VERSION} not found")
+                        error("Artifact for version ${rollbackVer} not found")
                     }
                 }
             }
@@ -81,7 +85,7 @@ pipeline {
 
         stage('Rollback') {
             when {
-                expression { params.ROLLBACK_VERSION != '1' }
+                expression { params.DEPLOY_TYPE == 'rollback' }
             }
             steps {
                 script {
@@ -102,19 +106,19 @@ pipeline {
     post {
         success {
             script {
-                if (params.ROLLBACK_VERSION != '1') {
-                    echo "Successfully rolled back to version ${params.ROLLBACK_VERSION}"
+                if (params.DEPLOY_TYPE == 'rollback') {
+                    echo "✅ Successfully rolled back to version ${params.ROLLBACK_VERSION}"
                 } else {
-                    echo "Deployment of version ${BUILD_VERSION} completed successfully!"
+                    echo "✅ Deployment of version ${BUILD_VERSION} completed successfully!"
                 }
             }
         }
         failure {
             script {
-                if (params.ROLLBACK_VERSION != '1') {
-                    echo "Rollback to version ${params.ROLLBACK_VERSION} failed"
+                if (params.DEPLOY_TYPE == 'rollback') {
+                    echo "❌ Rollback to version ${params.ROLLBACK_VERSION} failed"
                 } else {
-                    echo "Deployment failed for version ${BUILD_VERSION}"
+                    echo "❌ Deployment failed for version ${BUILD_VERSION}"
                 }
             }
         }
