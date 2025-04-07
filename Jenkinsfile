@@ -12,8 +12,8 @@ pipeline {
     parameters {
         choice(
             name: 'ROLLBACK_VERSION',
-            choices: ['1'], // Can be updated dynamically with active choice script plugin or default '1'
-            description: 'Select version to rollback to'
+            choices: ['1', '111', '112', '113'], // ✅ Add real build numbers here
+            description: 'Select version to rollback to. "1" means deploy latest.'
         )
     }
 
