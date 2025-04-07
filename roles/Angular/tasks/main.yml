@@ -11,23 +11,23 @@
     state: directory
     mode: '0755'
 
-- name: Copy artifact to server
+- name: Copy artifact to target
   delegate_to: localhost
   copy:
     src: "{{ provided_artifact_name }}"
-    dest: "{{ deploy_path }}/versions/{{ build_version }}/"
-    remote_src: yes
+    dest: "/tmp/{{ provided_artifact_name }}"
+    remote_src: no
 
 - name: Extract artifact to versioned directory
   unarchive:
-    src: "{{ deploy_path }}/versions/{{ build_version }}/{{ provided_artifact_name }}"
-    dest: "{{ deploy_path }}/versions/{{ current_version }}"
+    src: "/tmp/{{ provided_artifact_name }}"
+    dest: "{{ deploy_path }}/versions/{{ build_version }}"
     remote_src: yes
-    creates: "{{ deploy_path }}/versions/{{ current_version }}"
+    creates: "{{ deploy_path }}/versions/{{ build_version }}/index.html"
 
 - name: Update symlink to current version
   file:
-    src: "{{ deploy_path }}/versions/{{ current_version }}"
+    src: "{{ deploy_path }}/versions/{{ build_version }}"
     dest: "{{ app_symlink }}"
     state: link
     force: yes
@@ -40,4 +40,15 @@
     owner: www-data
     group: www-data
     mode: '0755'
-...
+
+- name: Restart Apache (Debian/Ubuntu)
+  service:
+    name: apache2
+    state: restarted
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Restart Apache (RedHat/CentOS)
+  service:
+    name: httpd
+    state: restarted
+  when: ansible_facts['os_family'] == "RedHat"
