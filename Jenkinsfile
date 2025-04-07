@@ -27,7 +27,7 @@ pipeline {
                     sh "tar -czvf ${ARTIFACT_NAME} -C dist/${APP_NAME}/browser ."
                     archiveArtifacts artifacts: "${ARTIFACT_NAME}", onlyIfSuccessful: true
 
-                    writeFile file: 'version.txt', text: "${BUILD_VERSION}"
+                    writeFile file: 'version.txt', text: "${params.VERSION}"
                     archiveArtifacts artifacts: 'version.txt', onlyIfSuccessful: true
                 }
             }
@@ -67,21 +67,32 @@ pipeline {
                         error("ROLLBACK_VERSION must be provided for rollback!")
                     }
 
-                    echo "Preparing to rollback to version ${rollbackVer}"
+                    echo "🔍 Searching for build with version.txt = ${rollbackVer}"
+
                     def job = Jenkins.instance.getItemByFullName(env.JOB_NAME)
                     if (!job) {
                         error("Could not retrieve current job.")
                     }
 
                     def matchingBuild = job.getBuilds().find { build ->
-                        build.artifacts.any { it.fileName == "${APP_NAME}-${rollbackVer}.tar.gz" }
+                        def versionFile = build.artifacts.find { it.relativePath == 'version.txt' }
+                        if (!versionFile) return false
+
+                        def versionText = ''
+                        try {
+                            versionText = build.getArtifactManager().root().child('version.txt').open().text.trim()
+                        } catch (err) {
+                            return false
+                        }
+
+                        return versionText == rollbackVer
                     }
 
                     if (!matchingBuild) {
-                        error("No artifact found for version ${rollbackVer}")
+                        error("❌ No build found with version.txt matching '${rollbackVer}'")
                     }
 
-                    echo "Found artifact for version ${rollbackVer} in build #${matchingBuild.getNumber()}"
+                    echo "✅ Found matching build #${matchingBuild.getNumber()} for version ${rollbackVer}"
                 }
             }
         }
