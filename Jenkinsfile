@@ -25,10 +25,15 @@ pipeline {
                     sh 'npm install --legacy-peer-deps'
                     sh 'npm run build'
                     sh "tar -czvf ${ARTIFACT_NAME} -C dist/${APP_NAME}/browser ."
-                    archiveArtifacts artifacts: "${ARTIFACT_NAME}", onlyIfSuccessful: true
 
-                    writeFile file: 'version.txt', text: "${params.VERSION}"
-                    archiveArtifacts artifacts: 'version.txt', onlyIfSuccessful: true
+                    // Save versioned copy
+                    sh "mkdir -p artifacts/${params.VERSION}"
+                    sh "cp ${ARTIFACT_NAME} artifacts/${params.VERSION}/${APP_NAME}-${params.VERSION}.tar.gz"
+
+                    writeFile file: "artifacts/${params.VERSION}/version.txt", text: "${params.VERSION}"
+
+                    archiveArtifacts artifacts: "${ARTIFACT_NAME}", onlyIfSuccessful: true
+                    archiveArtifacts artifacts: "artifacts/${params.VERSION}/*", onlyIfSuccessful: true
                 }
             }
         }
@@ -67,32 +72,15 @@ pipeline {
                         error("ROLLBACK_VERSION must be provided for rollback!")
                     }
 
-                    echo "🔍 Searching for build with version.txt = ${rollbackVer}"
+                    def artifactPath = "artifacts/${rollbackVer}/${APP_NAME}-${rollbackVer}.tar.gz"
+                    echo "🔍 Checking for artifact at ${artifactPath}"
 
-                    def job = Jenkins.instance.getItemByFullName(env.JOB_NAME)
-                    if (!job) {
-                        error("Could not retrieve current job.")
+                    if (!fileExists(artifactPath)) {
+                        error("❌ No archived artifact found at ${artifactPath}")
                     }
 
-                    def matchingBuild = job.getBuilds().find { build ->
-                        def versionFile = build.artifacts.find { it.relativePath == 'version.txt' }
-                        if (!versionFile) return false
-
-                        def versionText = ''
-                        try {
-                            versionText = build.getArtifactManager().root().child('version.txt').open().text.trim()
-                        } catch (err) {
-                            return false
-                        }
-
-                        return versionText == rollbackVer
-                    }
-
-                    if (!matchingBuild) {
-                        error("❌ No build found with version.txt matching '${rollbackVer}'")
-                    }
-
-                    echo "✅ Found matching build #${matchingBuild.getNumber()} for version ${rollbackVer}"
+                    env.ROLLBACK_ARTIFACT_PATH = artifactPath
+                    echo "✅ Found artifact for rollback: ${artifactPath}"
                 }
             }
         }
@@ -109,7 +97,8 @@ pipeline {
                         extraVars: [
                             rollback_version: "${params.ROLLBACK_VERSION}",
                             app_name: "${APP_NAME}",
-                            deploy_path: "${DEPLOY_PATH}"
+                            deploy_path: "${DEPLOY_PATH}",
+                            artifact_path: "${env.ROLLBACK_ARTIFACT_PATH}"
                         ]
                     )
                 }
