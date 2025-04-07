@@ -12,15 +12,15 @@
     mode: '0755'
 
 - name: Copy artifact to server
-  delegate_to: localhost   # ✅ This runs the task on Jenkins (control node)
+  delegate_to: localhost
   copy:
     src: "{{ provided_artifact_name }}"
-    dest: "{{ deploy_path }}/{{ build_version }}/"
-    remote_src: yes  # Assuming artifact is on Jenkins server
+    dest: "{{ deploy_path }}/versions/{{ build_version }}/"
+    remote_src: yes
 
 - name: Extract artifact to versioned directory
   unarchive:
-    src: "{{ artifact_path }}"
+    src: "{{ deploy_path }}/versions/{{ build_version }}/{{ provided_artifact_name }}"
     dest: "{{ deploy_path }}/versions/{{ current_version }}"
     remote_src: yes
     creates: "{{ deploy_path }}/versions/{{ current_version }}"

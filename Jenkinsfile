@@ -51,6 +51,7 @@ pipeline {
                             build_version: "${BUILD_VERSION}",
                             deploy_path: "${DEPLOY_PATH}",
                             current_version: "${BUILD_VERSION}"
+                            app_symlink: "${DEPLOY_PATH}/current"
                         ]
                     )
                 }
