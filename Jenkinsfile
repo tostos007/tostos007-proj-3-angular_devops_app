@@ -69,16 +69,19 @@ pipeline {
 
                     echo "Preparing to rollback to version ${rollbackVer}"
                     def job = Jenkins.instance.getItemByFullName(env.JOB_NAME)
-                    def build = job?.getBuildByNumber(rollbackVer.toInteger())
-                    if (!build) {
-                        error("Build ${rollbackVer} not found")
+                    if (!job) {
+                        error("Could not retrieve current job.")
                     }
-                    def artifact = build.getArtifacts().find {
-                        it.relativePath == "${APP_NAME}-${rollbackVer}.tar.gz"
+
+                    def matchingBuild = job.getBuilds().find { build ->
+                        build.artifacts.any { it.fileName == "${APP_NAME}-${rollbackVer}.tar.gz" }
                     }
-                    if (!artifact) {
-                        error("Artifact for version ${rollbackVer} not found")
+
+                    if (!matchingBuild) {
+                        error("No artifact found for version ${rollbackVer}")
                     }
+
+                    echo "Found artifact for version ${rollbackVer} in build #${matchingBuild.getNumber()}"
                 }
             }
         }
